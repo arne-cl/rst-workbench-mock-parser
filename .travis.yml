@@ -1,0 +1,10 @@
+sudo: required
+
+services:
+  - docker
+
+install:
+  - docker build -t rst-workbench-mock-parser .
+
+script:
+  - docker run --entrypoint=/bin/sh -ti rst-workbench-mock-parser -c py.test test_api.py
