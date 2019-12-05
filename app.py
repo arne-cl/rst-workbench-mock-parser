@@ -32,18 +32,18 @@ RS3_OUTPUT_TEMPLATE = """
 """
 
 
-# TODO: return string instead of file
-def get_input_file(request):
-    """Returns the input file from the POST request (no matter if it was sent as
-    a file named 'input' or a form field named 'input').
+def get_inputfile_as_string(request):
+    """Returns the input file from the POST request as a string,
+    no matter if it was sent as a file named 'input' or a form field
+    named 'input'.
+
     Returns None if the POST request does not have an 'input' file.
     """
     if 'input' in request.files:
-        return request.files['input']
+        input_bytes = request.files['input'].read()
+        return str(input_bytes, 'utf-8')
     elif 'input' in request.form:
-        input_string = request.form['input']
-        stringio_file = io.StringIO(input_string)
-        return werkzeug.FileStorage(stringio_file, 'input.ext')
+        return request.form['input']
 
 
 def cors_response(response, status=200):
@@ -62,26 +62,21 @@ class MockRSTParser(Resource):
 
             curl -XPOST "http://localhost:5000/parse" -F input=@source.txt
         """      
-        input_file = get_input_file(request)
-        if input_file is None:
+        input_string = get_inputfile_as_string(request)
+        if input_string is None:
             res = jsonify(
                 error=("Please upload a file using the key "
                        "'input' or the form field 'input'. "
                        "Used file keys: {}. Used form fields: {}").format(request.files.keys(), request.form.keys()))
             return cors_response(res, 500)
 
-        input_basename = Path(input_file.filename).stem
-        input_bytes = input_file.read()
-        input_string = str(input_bytes, 'utf-8')
-
         with tempfile.NamedTemporaryFile() as temp_outputfile:
             output_string = RS3_OUTPUT_TEMPLATE.format(begin=input_string[:20], end=input_string[-20:])
             temp_outputfile.write(output_string.encode())
             temp_outputfile.flush()
 
-            output_filename = f"{input_basename}.rs3"
             res = send_file(temp_outputfile.name, as_attachment=True,
-                            attachment_filename=output_filename)
+                            attachment_filename='output.rs3')
 
         return cors_response(res)
 

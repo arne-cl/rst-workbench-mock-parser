@@ -6,8 +6,8 @@ RUN apk update && \
     ln -s /usr/bin/python3 /usr/bin/python
 
 COPY . /opt/mock-parser
-
 WORKDIR /opt/mock-parser
+
 
 EXPOSE 5000
 ENTRYPOINT ["python3"]

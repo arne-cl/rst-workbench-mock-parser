@@ -22,18 +22,37 @@ def start_api():
     print("stopping API...")
     child.close()
 
-def post_input(input_text):
-    """Posts a file to the REST API and converts between the given formats."""
+def post_input_file(input_text):
+    """Posts a string as a file (multipart/form-data) named 'input' to the
+    REST API and returns the response.
+    """
     url = 'http://localhost:5000/parse'
     return requests.post(url, files={'input': input_text})
 
-def test_rst_parser():
-    """API generates rs3 file from plain text input"""
+def post_input_form(input_text):
+    """Posts a string as a form field (application/x-www-form-urlencoded)
+    named 'input' to the REST API and returns the response.
+    """
+    url = 'http://localhost:5000/parse'
+    return requests.post(url, data={'input': input_text})
+
+
+def test_rst_parser_file():
+    """API generates rs3 file from plain text input (multipart/form-data)"""
     input_string = 'foo'
-    res = post_input(input_string)
+    res = post_input_file(input_string)
     expected_output = RS3_OUTPUT_TEMPLATE.format(begin=input_string, end=input_string)
 
     assert res.content.decode('utf-8') == expected_output
+
+def test_rst_parser_form():
+    """API generates rs3 file from plain text input (application/x-www-form-urlencoded)"""
+    input_string = 'foo'
+    res = post_input_file(input_string)
+    expected_output = RS3_OUTPUT_TEMPLATE.format(begin=input_string, end=input_string)
+
+    assert res.content.decode('utf-8') == expected_output
+
 
 def test_missing_input():
     """Calling the API with missing results in an error"""
